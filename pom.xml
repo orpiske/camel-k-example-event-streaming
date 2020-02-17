@@ -11,6 +11,7 @@
 
     <properties>
         <version.camel>3.0.1</version.camel>
+        <version.qpid>0.40.0</version.qpid>
     </properties>
 
     <dependencyManagement>
@@ -21,11 +22,24 @@
                 <version>${version.camel}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-sjms2</artifactId>
+                <version>${version.camel}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.qpid</groupId>
+                <artifactId>qpid-jms-client</artifactId>
+                <version>${version.qpid}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <modules>
         <module>openaq-consumer</module>
+        <module>camel-cbr</module>
     </modules>
 
 </project>
