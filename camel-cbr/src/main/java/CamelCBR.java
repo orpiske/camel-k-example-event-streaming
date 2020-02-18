@@ -2,12 +2,8 @@ import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.sjms2.Sjms2Component;
 import org.apache.qpid.jms.JmsConnectionFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CamelCBR extends RouteBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(CamelCBR.class);
-
     @PropertyInject("messaging.broker.url")
     String brokerUrl;
 
