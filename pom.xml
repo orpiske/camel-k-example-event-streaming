@@ -12,6 +12,7 @@
     <properties>
         <version.camel>3.0.1</version.camel>
         <version.qpid>0.40.0</version.qpid>
+        <version.artemis-jms-client>2.10.1</version.artemis-jms-client>
     </properties>
 
     <dependencyManagement>
@@ -34,6 +35,13 @@
                 <version>${version.qpid}</version>
                 <scope>provided</scope>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>artemis-jms-client</artifactId>
+                <version>${version.artemis-jms-client}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.camel</groupId>
                 <artifactId>camel-rest</artifactId>
@@ -47,6 +55,7 @@
         <module>openaq-consumer</module>
         <module>camel-cbr</module>
         <module>user-report-system</module>
+        <module>no-op-consumers</module>
     </modules>
 
 </project>
