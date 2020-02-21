@@ -34,12 +34,19 @@
                 <version>${version.qpid}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-rest</artifactId>
+                <version>${version.camel}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <modules>
         <module>openaq-consumer</module>
         <module>camel-cbr</module>
+        <module>user-report-system</module>
     </modules>
 
 </project>
