@@ -56,6 +56,7 @@
         <module>camel-cbr</module>
         <module>user-report-system</module>
         <module>no-op-consumers</module>
+        <module>auth-gatekeeper</module>
     </modules>
 
 </project>
