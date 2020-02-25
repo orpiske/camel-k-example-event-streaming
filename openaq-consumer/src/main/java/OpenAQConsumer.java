@@ -8,10 +8,10 @@ public class OpenAQConsumer extends RouteBuilder {
          Read the data at a fixed interval of 1 second between each request, logging the execution of the
          route, setting up the HTTP method to GET and hitting the OpenAQ measurement API.
          */
-        from("timer:refresh?period=15s&fixedRate=true")
+        from("timer:refresh?period=10m&fixedRate=true")
                 .log("OpenAQ route running")
                 .setHeader(Exchange.HTTP_METHOD).constant("GET")
-                .to("https://api.openaq.org/v1/measurements")
+                .to("https://api.openaq.org/v1/measurements?limit=10000")
                 .streamCaching()
 
                 /*
