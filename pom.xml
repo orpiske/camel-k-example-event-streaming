@@ -63,6 +63,7 @@
         <module>user-report-system</module>
         <module>no-op-consumers</module>
         <module>audit-gatekeeper</module>
+        <module>usgs-consumer</module>
     </modules>
 
 </project>
