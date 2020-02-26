@@ -1,9 +1,12 @@
 package service;
 
+import java.util.Arrays;
+
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jackson.JacksonDataFormat;
+import org.apache.camel.spi.PropertiesComponent;
 
 public class UserReportSystem extends RouteBuilder {
 
@@ -106,13 +109,17 @@ public class UserReportSystem extends RouteBuilder {
 
         from("direct:report-new")
                 .streamCaching()
-                .wireTap("knative:channel/audit")
+                .wireTap("direct:audit")
                 .unmarshal(reportFormat)
                 .process(new Processor() {
                     public void process(Exchange exchange) throws Exception {
+                        PropertiesComponent pc = getContext().getPropertiesComponent();
+
+                        String[] userList = pc.loadProperties().getProperty("users.allowed").split(",");
+
                         Data data = exchange.getMessage().getBody(Data.class);
 
-                        if (data.getUser().getName().equals("reporter1")) {
+                        if (Arrays.asList(userList).contains(data.getUser().getName())) {
                             exchange.getMessage().setHeader("authorized", true);
                             exchange.getMessage().setBody("Authorized");
                             exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 200);
@@ -125,6 +132,9 @@ public class UserReportSystem extends RouteBuilder {
                     }
                 });
 
+
+        from("direct:audit")
+                .to("knative:channel/audit");
 
         from("direct:log")
                 .convertBodyTo(String.class)
