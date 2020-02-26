@@ -59,11 +59,11 @@
 
     <modules>
         <module>openaq-consumer</module>
-        <module>camel-cbr</module>
-        <module>user-report-system</module>
-        <module>no-op-consumers</module>
-        <module>audit-gatekeeper</module>
         <module>usgs-consumer</module>
+        <module>audit-gatekeeper</module>
+        <module>user-report-system</module>
+        <module>event-bridge</module>
+        <module>no-op-consumers</module>
     </modules>
 
 </project>
