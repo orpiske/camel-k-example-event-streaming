@@ -5,3 +5,4 @@ metadata:
 data:
   application.properties: |
     kafka.bootstrap.address=my.kafka.host.com:port
+    messaging.broker.url=amqp://my-message-broker-host:port
