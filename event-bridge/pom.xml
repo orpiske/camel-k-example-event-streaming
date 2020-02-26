@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>camel-cbr</artifactId>
+    <artifactId>event-bridge</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.apache.camel</groupId>
