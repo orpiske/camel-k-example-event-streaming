@@ -19,7 +19,7 @@ public class EarthquakeConsumer extends RouteBuilder {
                 measurement separately. To do, we use a splitter to split the results array and send to Kafka
                 only the results data and nothing more.
                 */
-                .split().jsonpath("$.features[*]")
+                .split().jsonpathWriteAsString("$.features[*]")
                 /*
                  Then setup a wireTap route to log the data before sending it to our Kafka instance.
                  */
