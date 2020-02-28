@@ -2,11 +2,12 @@ package service;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jackson.JacksonDataFormat;
-import org.apache.camel.spi.PropertiesComponent;
 
 public class UserReportSystem extends RouteBuilder {
 
@@ -91,8 +92,13 @@ public class UserReportSystem extends RouteBuilder {
         }
     }
 
+    @PropertyInject("users.allowed")
+    private String usersAllowed;
+
     public void configure() throws Exception {
         final String AUTH_HEADER = "authorized";
+        final String VALID_HEADER = "valid";
+        final String REPORT_TYPE_HEADER = "type";
 
         restConfiguration()
                 .component("netty-http")
@@ -130,9 +136,7 @@ public class UserReportSystem extends RouteBuilder {
         from("direct:authenticate")
             .process(new Processor() {
             public void process(Exchange exchange) throws Exception {
-                PropertiesComponent pc = getContext().getPropertiesComponent();
-
-                String[] userList = pc.loadProperties().getProperty("users.allowed").split(",");
+                String[] userList = usersAllowed.split(",");
 
                 Data data = exchange.getMessage().getBody(Data.class);
 
@@ -151,7 +155,53 @@ public class UserReportSystem extends RouteBuilder {
 
         from("direct:publish")
                 .log("log:info should be putting the message now: ${body}")
-                .transform().constant("OK");
+                .process(new Processor() {
+                    public void process(Exchange exchange) throws Exception {
+                        Data data = exchange.getMessage().getBody(Data.class);
+
+                        Data.Report report = data.getReport();
+
+                        if (report == null || report.getType() == null || report.getType().isEmpty()) {
+                            exchange.getMessage().setHeader(VALID_HEADER, false);
+                            exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 400);
+                            exchange.getMessage().setBody("Invalid report data: empty or null");
+                        }
+                        else {
+                            ObjectMapper mapper = new ObjectMapper();
+
+                            switch (report.getType()) {
+                                case "health":
+                                case "crime": {
+                                    exchange.getMessage().setHeader(VALID_HEADER, true);
+                                    exchange.getMessage().setHeader(REPORT_TYPE_HEADER, report.getType());
+
+                                    String body = mapper.writeValueAsString(report);
+                                    exchange.getMessage().setBody(body);
+                                    break;
+                                }
+                                default: {
+                                    exchange.getMessage().setHeader(VALID_HEADER, true);
+                                    exchange.getMessage().setBody("Invalid report data: unsupported report data");
+                                }
+                            }
+                        }
+                    }
+                })
+                .choice()
+                    .when(header(VALID_HEADER).isEqualTo(false))
+                        .stop()
+                    .when(header(VALID_HEADER).isEqualTo(true))
+                        .choice()
+                            .when(header(REPORT_TYPE_HEADER).isEqualTo("crime"))
+                                .to("kafka:crime-data?brokers={{kafka.bootstrap.address}}")
+                                .transform().constant("OK").stop()
+                            .when(header(REPORT_TYPE_HEADER).isEqualTo("health"))
+                                .to("kafka:health-data?brokers={{kafka.bootstrap.address}}")
+                                .transform().constant("OK");
+
+
+
+
 
     }
 }

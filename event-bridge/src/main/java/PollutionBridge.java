@@ -158,5 +158,15 @@ public class PollutionBridge extends RouteBuilder {
                 .streamCaching()
                 .log("log:info Earthquake Data = ${body}");
 
+        from("kafka:crime-data?brokers={{kafka.bootstrap.address}}")
+                .log("log:info received => ${body}")
+                .streamCaching()
+                .log("log:info Crime Data = ${body}");
+
+        from("kafka:health-data?brokers={{kafka.bootstrap.address}}")
+                .log("log:info received => ${body}")
+                .streamCaching()
+                .log("log:info Health Data = ${body}");
+
     }
 }
