@@ -92,6 +92,8 @@ public class UserReportSystem extends RouteBuilder {
     }
 
     public void configure() throws Exception {
+        final String AUTH_HEADER = "authorized";
+
         restConfiguration()
                 .component("netty-http")
                 .host("0.0.0.0")
@@ -111,27 +113,12 @@ public class UserReportSystem extends RouteBuilder {
                 .streamCaching()
                 .wireTap("direct:audit")
                 .unmarshal(reportFormat)
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
-                        PropertiesComponent pc = getContext().getPropertiesComponent();
-
-                        String[] userList = pc.loadProperties().getProperty("users.allowed").split(",");
-
-                        Data data = exchange.getMessage().getBody(Data.class);
-
-                        if (Arrays.asList(userList).contains(data.getUser().getName())) {
-                            exchange.getMessage().setHeader("authorized", true);
-                            exchange.getMessage().setBody("Authorized");
-                            exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 200);
-                        }
-                        else {
-                            exchange.getMessage().setHeader("authorized", false);
-                            exchange.getMessage().setBody("Unauthorized");
-                            exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 401);
-                        }
-                    }
-                });
-
+                .step()
+                    .to("direct:authenticate")
+                    .choice()
+                    .when(header(AUTH_HEADER).isEqualTo(true))
+                        .to("direct:publish")
+                    .end();
 
         from("direct:audit")
                 .to("knative:channel/audit");
@@ -139,6 +126,32 @@ public class UserReportSystem extends RouteBuilder {
         from("direct:log")
                 .convertBodyTo(String.class)
                 .to("log:info");
+
+        from("direct:authenticate")
+            .process(new Processor() {
+            public void process(Exchange exchange) throws Exception {
+                PropertiesComponent pc = getContext().getPropertiesComponent();
+
+                String[] userList = pc.loadProperties().getProperty("users.allowed").split(",");
+
+                Data data = exchange.getMessage().getBody(Data.class);
+
+                if (Arrays.asList(userList).contains(data.getUser().getName())) {
+                    exchange.getMessage().setHeader(AUTH_HEADER, true);
+                    exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 200);
+
+                }
+                else {
+                    exchange.getMessage().setHeader(AUTH_HEADER, false);
+                    exchange.getMessage().setBody("Unauthorized");
+                    exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 401);
+                }
+            }
+        });
+
+        from("direct:publish")
+                .log("log:info should be putting the message now: ${body}")
+                .transform().constant("OK");
 
     }
 }
