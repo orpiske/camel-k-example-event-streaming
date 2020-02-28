@@ -145,11 +145,9 @@ public class PollutionBridge extends RouteBuilder {
 
         from("kafka:pm-data?brokers={{kafka.bootstrap.address}}")
                 .unmarshal(dataFormat)
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
-                        PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
-                        LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
-                    }
+                .process(exchange -> {
+                    PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
+                    LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
                 })
                 .log("log:info Pollution Data = ${body}");
 
