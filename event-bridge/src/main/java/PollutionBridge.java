@@ -152,9 +152,12 @@ public class PollutionBridge extends RouteBuilder {
                 .unmarshal(dataFormat)
                 .process(exchange -> {
                     PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
+                    LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
 
                     if (pollutionData.getParameter().equals("pm10")) {
                         if (pollutionData.getValue() > 25.0) {
+                            LOG.info("City {} exceeds the maximum safe levels for PM 10 exposure",
+                                    pollutionData.getCity());
                             exchange.getMessage().setHeader(unsafeHeader, true);
 
                             if (pollutionData.getValue() > 50.0) {
@@ -167,6 +170,8 @@ public class PollutionBridge extends RouteBuilder {
 
                     if (pollutionData.getParameter().equals("pm25")) {
                         if (pollutionData.getValue() > 8.0) {
+                            LOG.info("City {} exceeds the maximum safe levels for PM 2.5 exposure",
+                                    pollutionData.getCity());
                             exchange.getMessage().setHeader(unsafeHeader, true);
 
                             if (pollutionData.getValue() > 25.0) {
@@ -181,7 +186,7 @@ public class PollutionBridge extends RouteBuilder {
                     String body = mapper.writeValueAsString(pollutionData);
                     exchange.getMessage().setBody(body);
 
-                    LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
+
                 })
                 .choice()
                     .when(header(unsafeHeader).isEqualTo(true))
