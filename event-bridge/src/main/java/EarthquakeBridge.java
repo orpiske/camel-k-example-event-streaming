@@ -359,9 +359,6 @@ public class EarthquakeBridge extends RouteBuilder {
 
                         String text = feature.getProperties().getTitle();
 
-                        ObjectMapper mapper = new ObjectMapper();
-
-
                         Alert alertMessage = new Alert();
 
                         if (tsunami != 0) {
@@ -369,6 +366,7 @@ public class EarthquakeBridge extends RouteBuilder {
                         }
                         alertMessage.setText(text);
 
+                        ObjectMapper mapper = new ObjectMapper();
                         String body = mapper.writeValueAsString(alertMessage);
                         exchange.getMessage().setBody(body);
                     }
@@ -378,6 +376,6 @@ public class EarthquakeBridge extends RouteBuilder {
                 })
                 .choice()
                     .when(header(unsafeHeader).isEqualTo(true))
-                        .to("sjms2://queue:alarms", "sjms2://queue:notifications");
+                        .to("sjms2://queue:alarms&ttl=86400000", "sjms2://queue:notifications&ttl=3600000");
     }
 }
