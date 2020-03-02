@@ -133,12 +133,24 @@ public class PollutionBridge extends RouteBuilder {
         }
     }
 
+    public static class Alert {
+        private String text;
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
+
 
     public void configure() throws Exception {
         final String unsafeHeader = "unsafe";
         final String unsafeTypeHeader = "unsafe-type";
-        final String SHORT_TERM = "short-term";
-        final String LONG_TERM = "long-term";
+        final String SHORT_TERM = "short term";
+        final String LONG_TERM = "long term";
 
         Sjms2Component sjms2Component = new Sjms2Component();
         sjms2Component.setConnectionFactory(new ActiveMQConnectionFactory(messagingBrokerUrl));
@@ -151,6 +163,10 @@ public class PollutionBridge extends RouteBuilder {
         from("kafka:pm-data?brokers={{kafka.bootstrap.address}}")
                 .unmarshal(dataFormat)
                 .process(exchange -> {
+                    final String TEXT_FORMAT =
+                            "City %s exceeds the maximum safe levels for %s exposure: %f.";
+                    String text = null;
+
                     PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
                     LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
 
@@ -166,6 +182,10 @@ public class PollutionBridge extends RouteBuilder {
                                 exchange.getMessage().setHeader(unsafeTypeHeader, LONG_TERM);
                             }
                         }
+
+                        text = String.format(TEXT_FORMAT, pollutionData.getCity(), "PM 10",
+                                pollutionData.getValue());
+
                     }
 
                     if (pollutionData.getParameter().equals("pm25")) {
@@ -180,13 +200,19 @@ public class PollutionBridge extends RouteBuilder {
                                 exchange.getMessage().setHeader(unsafeTypeHeader, LONG_TERM);
                             }
                         }
+
+                        text = String.format(TEXT_FORMAT, pollutionData.getCity(), "PM 10",
+                                pollutionData.getValue());
                     }
 
+
+                    Alert alert = new Alert();
+                    alert.setText(text);
+
                     ObjectMapper mapper = new ObjectMapper();
-                    String body = mapper.writeValueAsString(pollutionData);
+
+                    String body = mapper.writeValueAsString(alert);
                     exchange.getMessage().setBody(body);
-
-
                 })
                 .choice()
                     .when(header(unsafeHeader).isEqualTo(true))

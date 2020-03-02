@@ -318,6 +318,18 @@ public class EarthquakeBridge extends RouteBuilder {
         }
     }
 
+    public static class Alert {
+        private String text;
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
+
 
     public void configure() throws Exception {
         final String unsafeHeader = "unsafe";
@@ -342,25 +354,33 @@ public class EarthquakeBridge extends RouteBuilder {
                     int tsunami = feature.getProperties().getTsunami();
 
 
-                    if (alert != null || magnitude > 2.5 || tsunami == 1) {
+                    if (alert != null || magnitude > 2.5 || tsunami != 0) {
                         LOG.info("Critical geological event: {}", feature.getProperties().getTitle());
                         exchange.getMessage().setHeader(unsafeHeader, true);
                         exchange.getMessage().setHeader(unsafeTypeHeader, SHORT_TERM);
+
+
+                        String text = feature.getProperties().getTitle();
+
+                        ObjectMapper mapper = new ObjectMapper();
+
+
+                        Alert alertMessage = new Alert();
+
+                        if (tsunami != 0) {
+                            text = text + " with possibility of tsunami";
+                        }
+                        alertMessage.setText(text);
+
+                        String body = mapper.writeValueAsString(alertMessage);
+                        exchange.getMessage().setBody(body);
                     }
                     else {
                         LOG.info("Non-critical geological event: {}", feature.getProperties().getTitle());
                     }
-
-                    ObjectMapper mapper = new ObjectMapper();
-                    String body = mapper.writeValueAsString(feature);
-                    exchange.getMessage().setBody(body);
                 })
                 .choice()
                     .when(header(unsafeHeader).isEqualTo(true))
                         .to("sjms2://queue:alarms", "sjms2://queue:notifications");
-
-
-
-
     }
 }
