@@ -1,185 +1,149 @@
-import java.util.Date;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.sjms2.Sjms2Component;
 import org.apache.camel.component.jackson.JacksonDataFormat;
-import org.apache.qpid.jms.JmsConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class HealthBridge extends RouteBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(PollutionBridge.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HealthBridge.class);
 
     @PropertyInject("messaging.broker.url")
-    String brokerUrl;
+    private String messagingBrokerUrl;
 
-    public static class PollutionData {
-        public static class DateInfo {
-            private Date utc;
-            private Date local;
+    public static class Data {
+        public static class User {
+            private String name;
+            private String token;
 
-            public Date getUtc() {
-                return utc;
+            public String getName() {
+                return name;
             }
 
-            public void setUtc(Date utc) {
-                this.utc = utc;
+            public void setName(String name) {
+                this.name = name;
             }
 
-            public Date getLocal() {
-                return local;
+            public String getToken() {
+                return token;
             }
 
-            public void setLocal(Date local) {
-                this.local = local;
-            }
-        }
-
-        public static class Coordinates {
-            private double longitude;
-            private double latitude;
-
-            public double getLongitude() {
-                return longitude;
-            }
-
-            public void setLongitude(double longitude) {
-                this.longitude = longitude;
-            }
-
-            public double getLatitude() {
-                return latitude;
-            }
-
-            public void setLatitude(double latitude) {
-                this.latitude = latitude;
+            public void setToken(String token) {
+                this.token = token;
             }
         }
 
-        private String location;
-        private String parameter;
-        private DateInfo date;
-        private double value;
-        private String unit;
-        private Coordinates coordinates;
-        private String country;
-        private String city;
+        public static class Report {
+            private String type;
+            private String measurement;
+            private boolean alert;
+            private String location;
 
-        public String getLocation() {
-            return location;
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
+            }
+
+            public String getMeasurement() {
+                return measurement;
+            }
+
+            public void setMeasurement(String measurement) {
+                this.measurement = measurement;
+            }
+
+            public boolean isAlert() {
+                return alert;
+            }
+
+            public void setAlert(boolean alert) {
+                this.alert = alert;
+            }
+
+            public String getLocation() {
+                return location;
+            }
+
+            public void setLocation(String location) {
+                this.location = location;
+            }
         }
 
-        public void setLocation(String location) {
-            this.location = location;
+        private User user;
+        private Report report;
+
+        public User getUser() {
+            return user;
         }
 
-        public String getParameter() {
-            return parameter;
+        public void setUser(User user) {
+            this.user = user;
         }
 
-        public void setParameter(String parameter) {
-            this.parameter = parameter;
+        public Report getReport() {
+            return report;
         }
 
-        public DateInfo getDate() {
-            return date;
-        }
-
-        public void setDate(DateInfo date) {
-            this.date = date;
-        }
-
-        public double getValue() {
-            return value;
-        }
-
-        public void setValue(double value) {
-            this.value = value;
-        }
-
-        public String getUnit() {
-            return unit;
-        }
-
-        public void setUnit(String unit) {
-            this.unit = unit;
-        }
-
-        public Coordinates getCoordinates() {
-            return coordinates;
-        }
-
-        public void setCoordinates(Coordinates coordinates) {
-            this.coordinates = coordinates;
-        }
-
-        public String getCountry() {
-            return country;
-        }
-
-        public void setCountry(String country) {
-            this.country = country;
-        }
-
-        public String getCity() {
-            return city;
-        }
-
-        public void setCity(String city) {
-            this.city = city;
+        public void setReport(Report report) {
+            this.report = report;
         }
     }
 
+    public static class Alert {
+        private String text;
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
 
     public void configure() throws Exception {
         final String unsafeHeader = "unsafe";
-        final String unsafeTypeHeader = "unsafe-type";
 
         Sjms2Component sjms2Component = new Sjms2Component();
-        sjms2Component.setConnectionFactory(new JmsConnectionFactory(brokerUrl));
+        sjms2Component.setConnectionFactory(new ActiveMQConnectionFactory(messagingBrokerUrl));
         getContext().addComponent("sjms2", sjms2Component);
 
         JacksonDataFormat dataFormat  = new JacksonDataFormat();
-        dataFormat.setUnmarshalType(PollutionData.class);
-
-        from("kafka:pm-data?brokers={{kafka.bootstrap.address}}")
-                .unmarshal(dataFormat)
-                .process(exchange -> {
-                    PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
-
-                    if (pollutionData.getParameter().equals("pm10")) {
-                        if (pollutionData.getValue() > 25.0) {
-                            exchange.getMessage().setHeader(unsafeHeader, true);
-
-                            if (pollutionData.getValue() > 50.0) {
-                                exchange.getMessage().setHeader(unsafeTypeHeader, "short-term");
-                            } else {
-                                exchange.getMessage().setHeader(unsafeTypeHeader, "long-term");
-                            }
-                        }
-                    }
-
-
-                    LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
-                })
-                .log("log:info Pollution Data = ${body}");
-
-        from("kafka:earthquake-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Earthquake Data = ${body}");
-
-        from("kafka:crime-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Crime Data = ${body}");
+        dataFormat.setUnmarshalType(Data.class);
 
         from("kafka:health-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Health Data = ${body}");
+                .unmarshal(dataFormat)
+                .process(exchange -> {
+                    Data eventData = exchange.getMessage().getBody(Data.class);
+
+                    if (eventData.getReport().isAlert()) {
+                        exchange.getMessage().setHeader(unsafeHeader, true);
+                    }
+
+                    String text = String.format("There is a %s incident on %s", eventData.getReport().getMeasurement(),
+                        eventData.getReport().getLocation());
+
+                    Alert alert = new Alert();
+
+                    alert.setText(text);
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    String body = mapper.writeValueAsString(alert);
+
+                    exchange.getMessage().setBody(body);
+                })
+                .choice()
+                    .when(header(unsafeHeader).isEqualTo(true))
+                        .to("sjms2://queue:alarms&ttl=86400000")
+                    .otherwise()
+                        .to("sjms2://queue:notifications&ttl=3600000");
+
 
     }
 }

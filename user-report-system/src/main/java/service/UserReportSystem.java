@@ -36,7 +36,7 @@ public class UserReportSystem extends RouteBuilder {
         public static class Report {
             private String type;
             private String measurement;
-            private String value;
+            private boolean alert;
             private String location;
 
             public String getType() {
@@ -55,12 +55,12 @@ public class UserReportSystem extends RouteBuilder {
                 this.measurement = measurement;
             }
 
-            public String getValue() {
-                return value;
+            public boolean isAlert() {
+                return alert;
             }
 
-            public void setValue(String value) {
-                this.value = value;
+            public void setAlert(boolean alert) {
+                this.alert = alert;
             }
 
             public String getLocation() {
@@ -154,7 +154,6 @@ public class UserReportSystem extends RouteBuilder {
         });
 
         from("direct:publish")
-                .log("log:info should be putting the message now: ${body}")
                 .process(new Processor() {
                     public void process(Exchange exchange) throws Exception {
                         Data data = exchange.getMessage().getBody(Data.class);
