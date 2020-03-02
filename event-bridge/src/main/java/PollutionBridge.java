@@ -1,5 +1,6 @@
 import java.util.Date;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
@@ -175,6 +176,10 @@ public class PollutionBridge extends RouteBuilder {
                             }
                         }
                     }
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    String body = mapper.writeValueAsString(pollutionData);
+                    exchange.getMessage().setBody(body);
 
                     LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
                 })
