@@ -161,10 +161,12 @@ public class OpenAQConsumer extends RouteBuilder {
 
             ObjectMapper mapper = new ObjectMapper();
             for (PollutionData pollutionData : data.results) {
-                try {
-                    ret.add(mapper.writeValueAsString(pollutionData));
-                } catch (JsonProcessingException e) {
-                    LOG.error("Unable to serialize record: {}", pollutionData);
+                if (pollutionData.getParameter().equals("pm25") || pollutionData.getParameter().equals("pm10")) {
+                    try {
+                        ret.add(mapper.writeValueAsString(pollutionData));
+                    } catch (JsonProcessingException e) {
+                        LOG.error("Unable to serialize record: {}", pollutionData);
+                    }
                 }
 
             }
