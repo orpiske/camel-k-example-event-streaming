@@ -333,8 +333,6 @@ public class EarthquakeBridge extends RouteBuilder {
 
     public void configure() throws Exception {
         final String unsafeHeader = "unsafe";
-        final String unsafeTypeHeader = "unsafe-type";
-        final String SHORT_TERM = "short-term";
 
         Sjms2Component sjms2Component = new Sjms2Component();
         sjms2Component.setConnectionFactory(new ActiveMQConnectionFactory(messagingBrokerUrl));
@@ -357,7 +355,6 @@ public class EarthquakeBridge extends RouteBuilder {
                     if (alert != null || magnitude > 2.5 || tsunami != 0) {
                         LOG.info("Critical geological event: {}", feature.getProperties().getTitle());
                         exchange.getMessage().setHeader(unsafeHeader, true);
-                        exchange.getMessage().setHeader(unsafeTypeHeader, SHORT_TERM);
 
 
                         String text = feature.getProperties().getTitle();
