@@ -1,10 +1,10 @@
 import java.util.Date;
 
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.sjms2.Sjms2Component;
 import org.apache.camel.component.jackson.JacksonDataFormat;
-import org.apache.qpid.jms.JmsConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ public class PollutionBridge extends RouteBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(PollutionBridge.class);
 
     @PropertyInject("messaging.broker.url")
-    String brokerUrl;
+    private String messagingBrokerUrl;
 
     public static class PollutionData {
         public static class DateInfo {
@@ -140,8 +140,9 @@ public class PollutionBridge extends RouteBuilder {
         final String LONG_TERM = "long-term";
 
         Sjms2Component sjms2Component = new Sjms2Component();
-        sjms2Component.setConnectionFactory(new JmsConnectionFactory(brokerUrl));
+        sjms2Component.setConnectionFactory(new ActiveMQConnectionFactory(messagingBrokerUrl));
         getContext().addComponent("sjms2", sjms2Component);
+
 
         JacksonDataFormat dataFormat  = new JacksonDataFormat();
         dataFormat.setUnmarshalType(PollutionData.class);
@@ -181,9 +182,9 @@ public class PollutionBridge extends RouteBuilder {
                     .when(header(unsafeHeader).isEqualTo(true))
                         .choice()
                             .when(header(unsafeTypeHeader).isEqualTo(SHORT_TERM))
-                                .to("sjms://queue:alarms")
+                                .to("sjms2://queue:alarms")
                             .when(header(unsafeTypeHeader).isEqualTo(LONG_TERM))
-                                .to("sjms://queue:notifications")
+                                .to("sjms2://queue:notifications")
                             .otherwise()
                                 .log("Unexpected data: ${body}")
                             .endChoice()
