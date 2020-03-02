@@ -1,134 +1,320 @@
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.sjms2.Sjms2Component;
 import org.apache.camel.component.jackson.JacksonDataFormat;
-import org.apache.qpid.jms.JmsConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class EarthquakeBridge extends RouteBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(PollutionBridge.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EarthquakeBridge.class);
 
     @PropertyInject("messaging.broker.url")
-    String brokerUrl;
+    String messagingBrokerUrl;
 
-    public static class PollutionData {
-        public static class DateInfo {
-            private Date utc;
-            private Date local;
+    public static class Feature {
+        public static class Properties {
+            private double mag;
+            private String place;
+            private Date time;
+            private Date updated;
+            private int tz;
+            private String url;
+            private String detail;
+            private int felt;
+            private double cdi;
+            private double mmi;
+            private String alert;
+            private String status;
+            private int tsunami;
+            private int sig;
+            private String net;
+            private String code;
+            private String ids;
+            private String sources;
+            private String types;
+            private String nst;
+            @JsonIgnore
+            private double dmin;
+            private double rms;
+            private String gap;
+            private String magType;
+            private String type;
+            private String title;
 
-            public Date getUtc() {
-                return utc;
+            public double getMag() {
+                return mag;
             }
 
-            public void setUtc(Date utc) {
-                this.utc = utc;
+            public void setMag(double mag) {
+                this.mag = mag;
             }
 
-            public Date getLocal() {
-                return local;
+            public String getPlace() {
+                return place;
             }
 
-            public void setLocal(Date local) {
-                this.local = local;
+            public void setPlace(String place) {
+                this.place = place;
+            }
+
+            public Date getTime() {
+                return time;
+            }
+
+            public void setTime(Date time) {
+                this.time = time;
+            }
+
+            public Date getUpdated() {
+                return updated;
+            }
+
+            public void setUpdated(Date updated) {
+                this.updated = updated;
+            }
+
+            public int getTz() {
+                return tz;
+            }
+
+            public void setTz(int tz) {
+                this.tz = tz;
+            }
+
+            public String getUrl() {
+                return url;
+            }
+
+            public void setUrl(String url) {
+                this.url = url;
+            }
+
+            public String getDetail() {
+                return detail;
+            }
+
+            public void setDetail(String detail) {
+                this.detail = detail;
+            }
+
+            public int getFelt() {
+                return felt;
+            }
+
+            public void setFelt(int felt) {
+                this.felt = felt;
+            }
+
+            public double getCdi() {
+                return cdi;
+            }
+
+            public void setCdi(double cdi) {
+                this.cdi = cdi;
+            }
+
+            public double getMmi() {
+                return mmi;
+            }
+
+            public void setMmi(double mmi) {
+                this.mmi = mmi;
+            }
+
+            public String getAlert() {
+                return alert;
+            }
+
+            public void setAlert(String alert) {
+                this.alert = alert;
+            }
+
+            public String getStatus() {
+                return status;
+            }
+
+            public void setStatus(String status) {
+                this.status = status;
+            }
+
+            public int getTsunami() {
+                return tsunami;
+            }
+
+            public void setTsunami(int tsunami) {
+                this.tsunami = tsunami;
+            }
+
+            public int getSig() {
+                return sig;
+            }
+
+            public void setSig(int sig) {
+                this.sig = sig;
+            }
+
+            public String getNet() {
+                return net;
+            }
+
+            public void setNet(String net) {
+                this.net = net;
+            }
+
+            public String getCode() {
+                return code;
+            }
+
+            public void setCode(String code) {
+                this.code = code;
+            }
+
+            public String getIds() {
+                return ids;
+            }
+
+            public void setIds(String ids) {
+                this.ids = ids;
+            }
+
+            public String getSources() {
+                return sources;
+            }
+
+            public void setSources(String sources) {
+                this.sources = sources;
+            }
+
+            public String getTypes() {
+                return types;
+            }
+
+            public void setTypes(String types) {
+                this.types = types;
+            }
+
+            public String getNst() {
+                return nst;
+            }
+
+            public void setNst(String nst) {
+                this.nst = nst;
+            }
+
+            public double getDmin() {
+                return dmin;
+            }
+
+            public void setDmin(double dmin) {
+                this.dmin = dmin;
+            }
+
+            public double getRms() {
+                return rms;
+            }
+
+            public void setRms(double rms) {
+                this.rms = rms;
+            }
+
+            public String getGap() {
+                return gap;
+            }
+
+            public void setGap(String gap) {
+                this.gap = gap;
+            }
+
+            public String getMagType() {
+                return magType;
+            }
+
+            public void setMagType(String magType) {
+                this.magType = magType;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
             }
         }
 
-        public static class Coordinates {
-            private double longitude;
-            private double latitude;
+        public static class Geometry {
+            private String type;
+            private List<Double> coordinates = new ArrayList<Double>();
 
-            public double getLongitude() {
-                return longitude;
+            public String getType() {
+                return type;
             }
 
-            public void setLongitude(double longitude) {
-                this.longitude = longitude;
+            public void setType(String type) {
+                this.type = type;
             }
 
-            public double getLatitude() {
-                return latitude;
+            public List<Double> getCoordinates() {
+                return coordinates;
             }
 
-            public void setLatitude(double latitude) {
-                this.latitude = latitude;
+            public void setCoordinates(List<Double> coordinates) {
+                this.coordinates = coordinates;
             }
         }
 
-        private String location;
-        private String parameter;
-        private DateInfo date;
-        private double value;
-        private String unit;
-        private Coordinates coordinates;
-        private String country;
-        private String city;
+        private String type;
+        private Properties properties;
+        private Geometry geometry;
 
-        public String getLocation() {
-            return location;
+        private String id;
+
+        public String getType() {
+            return type;
         }
 
-        public void setLocation(String location) {
-            this.location = location;
+        public void setType(String type) {
+            this.type = type;
         }
 
-        public String getParameter() {
-            return parameter;
+        public Properties getProperties() {
+            return properties;
         }
 
-        public void setParameter(String parameter) {
-            this.parameter = parameter;
+        public void setProperties(Properties properties) {
+            this.properties = properties;
         }
 
-        public DateInfo getDate() {
-            return date;
+        public Geometry getGeometry() {
+            return geometry;
         }
 
-        public void setDate(DateInfo date) {
-            this.date = date;
+        public void setGeometry(Geometry geometry) {
+            this.geometry = geometry;
         }
 
-        public double getValue() {
-            return value;
+        public String getId() {
+            return id;
         }
 
-        public void setValue(double value) {
-            this.value = value;
-        }
-
-        public String getUnit() {
-            return unit;
-        }
-
-        public void setUnit(String unit) {
-            this.unit = unit;
-        }
-
-        public Coordinates getCoordinates() {
-            return coordinates;
-        }
-
-        public void setCoordinates(Coordinates coordinates) {
-            this.coordinates = coordinates;
-        }
-
-        public String getCountry() {
-            return country;
-        }
-
-        public void setCountry(String country) {
-            this.country = country;
-        }
-
-        public String getCity() {
-            return city;
-        }
-
-        public void setCity(String city) {
-            this.city = city;
+        public void setId(String id) {
+            this.id = id;
         }
     }
 
@@ -136,30 +322,45 @@ public class EarthquakeBridge extends RouteBuilder {
     public void configure() throws Exception {
         final String unsafeHeader = "unsafe";
         final String unsafeTypeHeader = "unsafe-type";
+        final String SHORT_TERM = "short-term";
 
         Sjms2Component sjms2Component = new Sjms2Component();
-        sjms2Component.setConnectionFactory(new JmsConnectionFactory(brokerUrl));
+        sjms2Component.setConnectionFactory(new ActiveMQConnectionFactory(messagingBrokerUrl));
         getContext().addComponent("sjms2", sjms2Component);
 
         JacksonDataFormat dataFormat  = new JacksonDataFormat();
-        dataFormat.setUnmarshalType(PollutionData.class);
-
+        dataFormat.setUnmarshalType(Feature.class);
 
 
         from("kafka:earthquake-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Earthquake Data = ${body}");
+                .unmarshal(dataFormat)
+                .process(exchange -> {
+                    Feature feature = exchange.getMessage().getBody(Feature.class);
 
-        from("kafka:crime-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Crime Data = ${body}");
+                    String alert = feature.getProperties().getAlert();
+                    double magnitude = feature.getProperties().getMag();
+                    int tsunami = feature.getProperties().getTsunami();
 
-        from("kafka:health-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Health Data = ${body}");
+
+                    if (alert != null || magnitude > 2.5 || tsunami == 1) {
+                        LOG.info("Critical geological event: {}", feature.getProperties().getTitle());
+                        exchange.getMessage().setHeader(unsafeHeader, true);
+                        exchange.getMessage().setHeader(unsafeTypeHeader, SHORT_TERM);
+                    }
+                    else {
+                        LOG.info("Non-critical geological event: {}", feature.getProperties().getTitle());
+                    }
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    String body = mapper.writeValueAsString(feature);
+                    exchange.getMessage().setBody(body);
+                })
+                .choice()
+                    .when(header(unsafeHeader).isEqualTo(true))
+                        .to("sjms2://queue:alarms", "sjms2://queue:notifications");
+
+
+
 
     }
 }
