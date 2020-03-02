@@ -318,6 +318,8 @@ public class EarthquakeConsumer extends RouteBuilder {
         @JsonIgnore
         private Object metadata;
         private List<Feature> features = new ArrayList<Feature>();
+        @JsonIgnore
+        private Object bbox;
 
 
         public String getType() {
@@ -343,6 +345,14 @@ public class EarthquakeConsumer extends RouteBuilder {
         public void setFeatures(List<Feature> features) {
             this.features = features;
         }
+
+        public Object getBbox() {
+            return bbox;
+        }
+
+        public void setBbox(Object bbox) {
+            this.bbox = bbox;
+        }
     }
 
     public static class MySplitter {
@@ -357,8 +367,6 @@ public class EarthquakeConsumer extends RouteBuilder {
                 } catch (JsonProcessingException e) {
                     LOG.error("Unable to serialize record: {}", feature);
                 }
-
-
             }
 
             return ret;
