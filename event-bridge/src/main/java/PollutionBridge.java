@@ -134,6 +134,11 @@ public class PollutionBridge extends RouteBuilder {
 
 
     public void configure() throws Exception {
+        final String unsafeHeader = "unsafe";
+        final String unsafeTypeHeader = "unsafe-type";
+        final String SHORT_TERM = "short-term";
+        final String LONG_TERM = "long-term";
+
         Sjms2Component sjms2Component = new Sjms2Component();
         sjms2Component.setConnectionFactory(new JmsConnectionFactory(brokerUrl));
         getContext().addComponent("sjms2", sjms2Component);
@@ -145,24 +150,44 @@ public class PollutionBridge extends RouteBuilder {
                 .unmarshal(dataFormat)
                 .process(exchange -> {
                     PollutionData pollutionData = exchange.getMessage().getBody(PollutionData.class);
+
+                    if (pollutionData.getParameter().equals("pm10")) {
+                        if (pollutionData.getValue() > 25.0) {
+                            exchange.getMessage().setHeader(unsafeHeader, true);
+
+                            if (pollutionData.getValue() > 50.0) {
+                                exchange.getMessage().setHeader(unsafeTypeHeader, SHORT_TERM);
+                            } else {
+                                exchange.getMessage().setHeader(unsafeTypeHeader, LONG_TERM);
+                            }
+                        }
+                    }
+
+                    if (pollutionData.getParameter().equals("pm25")) {
+                        if (pollutionData.getValue() > 8.0) {
+                            exchange.getMessage().setHeader(unsafeHeader, true);
+
+                            if (pollutionData.getValue() > 25.0) {
+                                exchange.getMessage().setHeader(unsafeTypeHeader, SHORT_TERM);
+                            } else {
+                                exchange.getMessage().setHeader(unsafeTypeHeader, LONG_TERM);
+                            }
+                        }
+                    }
+
                     LOG.info("Processing pollution data for city {} ", pollutionData.getCity());
                 })
-                .log("log:info Pollution Data = ${body}");
-
-        from("kafka:earthquake-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Earthquake Data = ${body}");
-
-        from("kafka:crime-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Crime Data = ${body}");
-
-        from("kafka:health-data?brokers={{kafka.bootstrap.address}}")
-                .log("log:info received => ${body}")
-                .streamCaching()
-                .log("log:info Health Data = ${body}");
+                .choice()
+                    .when(header(unsafeHeader).isEqualTo(true))
+                        .choice()
+                            .when(header(unsafeTypeHeader).isEqualTo(SHORT_TERM))
+                                .to("sjms://queue:alarms")
+                            .when(header(unsafeTypeHeader).isEqualTo(LONG_TERM))
+                                .to("sjms://queue:notifications")
+                            .otherwise()
+                                .log("Unexpected data: ${body}")
+                            .endChoice()
+                        .endChoice();
 
     }
 }
