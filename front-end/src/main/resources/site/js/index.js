@@ -53,21 +53,17 @@ $(document).ready(function () {
         for(var i = 0; i < response.data.length; i++) {
             var obj = JSON.parse(response.data[i]);
 
-            if ((i % 3) == 0) {
+            if (obj.severity == "red") {
                 myHtml += renderTimelineAlertIncident(obj)
             }
             else {
-                if ((i % 2) == 0) {
+                if (obj.severity == "yellow") {
                     myHtml += renderTimelineWarningIncident(obj)
                 }
                 else {
                     myHtml += renderTimelineInfoIncident(obj)
                 }
             }
-
-            // console.log("1: " + obj);
-            // console.log("2: " + );
-            // console.log("3: " + obj["text"]);
         }
 
         container.innerHTML = myHtml
